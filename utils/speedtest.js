@@ -1,5 +1,6 @@
 const axios = require('axios');
 const config = require('../config.js');
+const { log, error } = require('./logger');
 
 /**
  * 测试指定的LibreSpeed服务器
@@ -39,42 +40,42 @@ async function testServers(server) {
 
     // 获取服务器信息
     try {
-      console.log(`获取服务器信息: ${server.url}`);
+      log(`获取服务器信息: ${server.url}`);
       const serverInfoResponse = await client.get('/backend/getIP.php');
       result.server_info = serverInfoResponse.data;
     } catch (error) {
-      console.error(`获取服务器信息失败: ${server.url}`, error.message);
+      error(`获取服务器信息失败: ${server.url}`, error.message);
       result.errors.push(`获取服务器信息失败: ${error.message}`);
     }
 
     // 执行下载测试
     try {
-      console.log(`执行下载测试: ${server.url}`);
+      log(`执行下载测试: ${server.url}`);
       const downloadTestResult = await performDownloadTest(client);
       result.download_speed = downloadTestResult.speed;
     } catch (error) {
-      console.error(`下载测试失败: ${server.url}`, error.message);
+      error(`下载测试失败: ${server.url}`, error.message);
       result.errors.push(`下载测试失败: ${error.message}`);
     }
 
     // 执行上传测试
     try {
-      console.log(`执行上传测试: ${server.url}`);
+      log(`执行上传测试: ${server.url}`);
       const uploadTestResult = await performUploadTest(client);
       result.upload_speed = uploadTestResult.speed;
     } catch (error) {
-      console.error(`上传测试失败: ${server.url}`, error.message);
+      error(`上传测试失败: ${server.url}`, error.message);
       result.errors.push(`上传测试失败: ${error.message}`);
     }
 
     // 执行ping测试
     try {
-      console.log(`执行ping测试: ${server.url}`);
+      log(`执行ping测试: ${server.url}`);
       const pingTestResult = await performPingTest(client);
       result.ping = pingTestResult.ping;
       result.jitter = pingTestResult.jitter;
     } catch (error) {
-      console.error(`ping测试失败: ${server.url}`, error.message);
+      error(`ping测试失败: ${server.url}`, error.message);
       result.errors.push(`ping测试失败: ${error.message}`);
     }
 
@@ -85,7 +86,7 @@ async function testServers(server) {
 
     return result;
   } catch (error) {
-    console.error(`测试服务器 ${server.name || server.url} 失败:`, error.message);
+    error(`测试服务器 ${server.name || server.url} 失败:`, error.message);
     // 确保结果中包含错误信息，但仍然返回部分结果
     result.errors.push(`总体测试失败: ${error.message}`);
     return result;
@@ -167,7 +168,7 @@ async function performDownloadTest(client) {
       });
     });
   } catch (error) {
-    console.error('下载测试失败:', error.message);
+    error('下载测试失败:', error.message);
     throw error;
   }
 }
@@ -189,6 +190,7 @@ async function performUploadTest(client) {
       headers: {
         'Content-Type': 'application/octet-stream'
       },
+      timeout: config.test.uploadTimeout * 1000, // 使用配置的上传测试超时时间
       maxContentLength: Infinity,
       maxBodyLength: Infinity
     });
@@ -201,11 +203,11 @@ async function performUploadTest(client) {
       speed: parseFloat(speedMbps.toFixed(2))
     };
   } catch (error) {
-    console.error('上传测试失败:', error.message);
+    error('上传测试失败:', error.message);
     
     // 尝试使用较小的数据包进行测试
     try {
-      console.log('尝试使用较小的数据包进行上传测试...');
+      log('尝试使用较小的数据包进行上传测试...');
       const smallTestData = generateTestData(config.test.smallUploadSize * 1024 * 1024); // 使用配置的小数据包大小
       
       const startTime = Date.now();
@@ -213,7 +215,8 @@ async function performUploadTest(client) {
       await client.post('/backend/empty.php', smallTestData, {
         headers: {
           'Content-Type': 'application/octet-stream'
-        }
+        },
+        timeout: config.test.uploadTimeout * 1000 // 使用配置的上传测试超时时间
       });
       
       const endTime = Date.now();
@@ -226,7 +229,7 @@ async function performUploadTest(client) {
         note: '使用较小的数据包进行测试，可能不够准确'
       };
     } catch (smallError) {
-      console.error('小数据包上传测试也失败:', smallError.message);
+      error('小数据包上传测试也失败:', smallError.message);
       throw error; // 抛出原始错误，而不是小数据包测试的错误
     }
   }
@@ -279,7 +282,7 @@ async function performPingTest(client) {
       note: pingTimes.length < pingCount ? `部分ping请求失败 (${failedPings}/${pingCount})` : null
     };
   } catch (error) {
-    console.error('ping测试失败:', error.message);
+    error('ping测试失败:', error.message);
     throw error;
   }
 }

@@ -1,10 +1,11 @@
 const config = require('../config.js');
 const { initDatabase, closeConnection } = require('../utils/database');
+const { log, error } = require('../utils/logger');
 const mysql = require('mysql2/promise');
 
 async function testDatabaseConnection() {
-  console.log('正在测试数据库连接...');
-  console.log('数据库配置:', {
+  log('正在测试数据库连接...');
+  log('数据库配置:', {
     host: config.database.host,
     port: config.database.port,
     database: config.database.database,
@@ -22,25 +23,25 @@ async function testDatabaseConnection() {
       user: config.database.username,
       password: config.database.password
     });
-    console.log('✅ 成功连接到MySQL服务器');
+    log('✅ 成功连接到MySQL服务器');
 
     // 检查数据库是否存在
     console.log('\n步骤2: 检查数据库是否存在...');
     const [rows] = await connection.execute(`SHOW DATABASES LIKE '${config.database.database}'`);
     
     if (rows.length === 0) {
-      console.log(`📋 数据库 '${config.database.database}' 不存在，尝试创建...`);
+      log(`📋 数据库 '${config.database.database}' 不存在，尝试创建...`);
       try {
         await connection.execute(`CREATE DATABASE ${config.database.database}`);
-        console.log(`✅ 数据库 '${config.database.database}' 创建成功`);
+        log(`✅ 数据库 '${config.database.database}' 创建成功`);
       } catch (createError) {
-        console.error(`❌ 创建数据库失败: ${createError.message}`);
-        console.log('请手动创建数据库并确保用户有适当权限');
+        error(`❌ 创建数据库失败: ${createError.message}`);
+        log('请手动创建数据库并确保用户有适当权限');
         await connection.end();
         return false;
       }
     } else {
-      console.log(`✅ 数据库 '${config.database.database}' 已存在`);
+      log(`✅ 数据库 '${config.database.database}' 已存在`);
     }
 
     // 关闭初始连接
@@ -49,14 +50,14 @@ async function testDatabaseConnection() {
     // 使用我们的数据库模块初始化连接
     console.log('\n步骤3: 使用项目配置初始化数据库连接...');
     await initDatabase(config.database);
-    console.log('✅ 数据库连接和表初始化成功！');
+    log('✅ 数据库连接和表初始化成功！');
     
     // 关闭连接
     await closeConnection();
-    console.log('✅ 数据库连接已关闭');
+    log('✅ 数据库连接已关闭');
     return true;
   } catch (error) {
-    console.error('❌ 数据库连接失败:', error.message);
+    error('❌ 数据库连接失败:', error.message);
     
     // 提供更详细的错误信息和解决建议
     if (error.code === 'ER_ACCESS_DENIED_ERROR') {
@@ -83,7 +84,7 @@ if (require.main === module) {
       process.exit(success ? 0 : 1);
     })
     .catch(error => {
-      console.error('测试过程中发生错误:', error);
+      error('测试过程中发生错误:', error);
       process.exit(1);
     });
 }

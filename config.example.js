@@ -16,6 +16,13 @@ module.exports = {
     }
   },
   
+  // 数据库表结构说明
+  // 由于测试可能会失败，以下字段现在可以为空（nullable）：
+  // - download_speed: 下载速度（Mbps）
+  // - upload_speed: 上传速度（Mbps）
+  // - ping: 延迟（毫秒）
+  // - jitter: 抖动（毫秒）
+  
   // 服务器配置示例
   servers: [
     {
@@ -47,7 +54,10 @@ module.exports = {
     pingCount: 10,
     
     // 下载测试超时时间（秒）
-    downloadTimeout: 25,
+    downloadTimeout: 60,
+    
+    // 上传测试超时时间（秒）
+    uploadTimeout: 60,
     
     // ping测试超时时间（秒）
     pingTimeout: 5

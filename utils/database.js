@@ -1,4 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
+const { log, error, warn } = require('./logger');
 let sequelize = null;
 let SpeedtestResult = null;
 
@@ -23,25 +24,25 @@ async function initDatabase(dbConfig) {
           idle: parseInt(dbConfig.pool.idle),
           acquire: parseInt(dbConfig.pool.acquire)
         },
-        logging: process.env.NODE_ENV === 'development' ? console.log : false
+        logging: process.env.NODE_ENV === 'development' ? log : false
       }
     );
     
     // 测试连接
     await sequelize.authenticate();
-    console.log('数据库连接成功');
+    log('数据库连接成功');
     
     // 定义模型
     defineSpeedtestResultModel();
     
     // 同步模型到数据库
     await sequelize.sync({ alter: true });
-    console.log('数据库表初始化完成');
+    log('数据库表初始化完成');
     
     // 创建索引以提高查询性能
     await createIndexes();
   } catch (error) {
-    console.error('数据库初始化失败:', error);
+    error('数据库初始化失败:', error);
     throw error;
   }
 }
@@ -70,19 +71,19 @@ function defineSpeedtestResultModel() {
     },
     download_speed: {
       type: DataTypes.FLOAT,
-      allowNull: false
+      allowNull: true
     },
     upload_speed: {
       type: DataTypes.FLOAT,
-      allowNull: false
+      allowNull: true
     },
     ping: {
       type: DataTypes.FLOAT,
-      allowNull: false
+      allowNull: true
     },
     jitter: {
       type: DataTypes.FLOAT,
-      allowNull: false
+      allowNull: true
     },
     server_info: {
       type: DataTypes.JSON,
@@ -108,9 +109,9 @@ async function createIndexes() {
     // 为服务器名称创建索引
     await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_server_name ON speedtest_results (server_name)`);
     
-    console.log('数据库索引创建完成');
+    log('数据库索引创建完成');
   } catch (error) {
-    console.warn('创建索引时出现警告（可能已存在）:', error.message);
+    warn('创建索引时出现警告（可能已存在）:', error.message);
   }
 }
 
@@ -131,29 +132,29 @@ function validateResult(result) {
     errors.push('server_url 必须是字符串且不能为空');
   }
   
-  // 验证速度数据
-  if (result.download_speed === undefined || result.download_speed === null) {
-    errors.push('download_speed 不能为空');
-  } else if (typeof result.download_speed !== 'number' || isNaN(result.download_speed) || result.download_speed < 0) {
-    errors.push('download_speed 必须是非负数');
+  // 验证速度数据（现在可以为空）
+  if (result.download_speed !== undefined && result.download_speed !== null) {
+    if (typeof result.download_speed !== 'number' || isNaN(result.download_speed) || result.download_speed < 0) {
+      errors.push('download_speed 必须是非负数或为空');
+    }
   }
   
-  if (result.upload_speed === undefined || result.upload_speed === null) {
-    errors.push('upload_speed 不能为空');
-  } else if (typeof result.upload_speed !== 'number' || isNaN(result.upload_speed) || result.upload_speed < 0) {
-    errors.push('upload_speed 必须是非负数');
+  if (result.upload_speed !== undefined && result.upload_speed !== null) {
+    if (typeof result.upload_speed !== 'number' || isNaN(result.upload_speed) || result.upload_speed < 0) {
+      errors.push('upload_speed 必须是非负数或为空');
+    }
   }
   
-  if (result.ping === undefined || result.ping === null) {
-    errors.push('ping 不能为空');
-  } else if (typeof result.ping !== 'number' || isNaN(result.ping) || result.ping < 0) {
-    errors.push('ping 必须是非负数');
+  if (result.ping !== undefined && result.ping !== null) {
+    if (typeof result.ping !== 'number' || isNaN(result.ping) || result.ping < 0) {
+      errors.push('ping 必须是非负数或为空');
+    }
   }
   
-  if (result.jitter === undefined || result.jitter === null) {
-    errors.push('jitter 不能为空');
-  } else if (typeof result.jitter !== 'number' || isNaN(result.jitter) || result.jitter < 0) {
-    errors.push('jitter 必须是非负数');
+  if (result.jitter !== undefined && result.jitter !== null) {
+    if (typeof result.jitter !== 'number' || isNaN(result.jitter) || result.jitter < 0) {
+      errors.push('jitter 必须是非负数或为空');
+    }
   }
   
   // 验证server_info（可选字段）
@@ -180,7 +181,7 @@ async function saveResult(result) {
   const validation = validateResult(result);
   if (!validation.isValid) {
     const errorMsg = `数据验证失败: ${validation.errors.join(', ')}`;
-    console.error(errorMsg);
+    error(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -196,10 +197,10 @@ async function saveResult(result) {
       server_info: result.server_info || {}
     });
     
-    console.log('测试结果已保存到数据库，ID:', record.id);
+    log('测试结果已保存到数据库，ID:', record.id);
     return record;
   } catch (error) {
-    console.error('保存测试结果失败:', error);
+    error('保存测试结果失败:', error);
     throw error;
   }
 }
@@ -226,7 +227,7 @@ async function getHistoryResults(limit = 10, serverName = null) {
     
     return results.map(result => result.get({ plain: true }));
   } catch (error) {
-    console.error('获取历史结果失败:', error);
+    error('获取历史结果失败:', error);
     throw error;
   }
 }
@@ -255,7 +256,7 @@ async function getServerStats(serverUrl) {
     
     return stats.get({ plain: true });
   } catch (error) {
-    console.error('获取服务器统计信息失败:', error);
+    error('获取服务器统计信息失败:', error);
     throw error;
   }
 }
@@ -268,7 +269,7 @@ async function closeConnection() {
     await sequelize.close();
     sequelize = null;
     SpeedtestResult = null;
-    console.log('数据库连接已关闭');
+    log('数据库连接已关闭');
   }
 }
 
