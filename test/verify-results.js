@@ -1,14 +1,12 @@
 const config = require('../config.js');
-const { initDatabase, getHistoryResults, closeConnection } = require('../utils/database-native');
+const { setupTestDatabase, teardownTestDatabase, runTestWithDatabase } = require('./test-utils');
+const { getHistoryResults } = require('../utils/database-native');
 const { logInfo, logError } = require('../utils/logger');
 
 async function verifyResults() {
   logInfo('验证测试结果是否正确保存到数据库...');
   
-  try {
-    // 初始化数据库连接
-    await initDatabase(config.database);
-    
+  return await runTestWithDatabase(async () => {
     // 获取最近的测试结果
     const results = await getHistoryResults(5);
     
@@ -87,14 +85,8 @@ async function verifyResults() {
       logInfo('❌ 部分记录的数据完整性验证失败');
     }
     
-    // 关闭数据库连接
-    await closeConnection();
-    
     return allValid;
-  } catch (error) {
-    logError('验证过程中发生错误:', error);
-    return false;
-  }
+  });
 }
 
 // 如果直接运行此文件，则执行验证

@@ -10,7 +10,7 @@ scripts/
 ├── index.js                     # 主脚本文件
 ├── config.js                    # 配置文件
 └── utils/
-    ├── database.js              # 数据库操作工具
+    ├── database-native.js       # 数据库操作工具
     └── speedtest.js             # 测速功能工具
 ```
 
@@ -22,7 +22,7 @@ scripts/
 - **package.json**: 项目依赖配置，列出所需的npm包。
 
 ### 2. 工具文件
-- **utils/database.js**: 数据库操作工具，处理MySQL连接、表创建和结果存储。
+- **utils/database-native.js**: 数据库操作工具，处理MySQL连接、表创建和结果存储。
 - **utils/speedtest.js**: 测速功能工具，调用LibreSpeed API并处理basic_auth认证。
 
 ## 实现优势
@@ -54,7 +54,7 @@ scripts/
 ### index.js 主要结构
 ```javascript
 const { testServers } = require('./utils/speedtest');
-const { saveResult, initDatabase } = require('./utils/database');
+const { saveResult, initDatabase } = require('./utils/database-native');
 const config = require('./config.js');
 
 async function main() {

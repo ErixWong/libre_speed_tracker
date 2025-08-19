@@ -1,5 +1,5 @@
 const config = require('../config.js');
-const { initDatabase, closeConnection } = require('../utils/database-native');
+const { setupTestDatabase, teardownTestDatabase } = require('./test-utils');
 const { logInfo, logError } = require('../utils/logger');
 const mysql = require('mysql2/promise');
 
@@ -49,11 +49,11 @@ async function testDatabaseConnection() {
 
     // 使用我们的数据库模块初始化连接
     console.log('\n步骤3: 使用项目配置初始化数据库连接...');
-    await initDatabase(config.database);
+    await setupTestDatabase();
     logInfo('✅ 数据库连接和表初始化成功！');
     
     // 关闭连接
-    await closeConnection();
+    await teardownTestDatabase();
     logInfo('✅ 数据库连接已关闭');
     return true;
   } catch (error) {

@@ -63,6 +63,15 @@ async function getTestHistoryResults(limit = 10) {
 }
 
 /**
+ * 处理单个服务器测试错误
+ * @param {Object} server 服务器配置
+ * @param {Error} error 错误对象
+ */
+function handleServerError(server, error) {
+  logError(`测试失败: ${server.name || server.url}`, error.message);
+}
+
+/**
  * 测试所有服务器
  * @returns {Promise<Array>} 所有服务器的测试结果
  */
@@ -82,7 +91,7 @@ async function testAllServers() {
         await saveTestResult(result);
         results.push(result);
       } catch (err) {
-        logError(`测试失败: ${server.name || server.url}`, err.message);
+        handleServerError(server, err);
         // 继续测试其他服务器，而不是终止整个测试过程
       }
     }
@@ -106,22 +115,29 @@ async function closeDatabaseConnection() {
 }
 
 /**
+ * 安全关闭数据库连接
+ */
+async function safeCloseDatabaseConnection() {
+  try {
+    await closeDatabaseConnection();
+  } catch (closeError) {
+    logError('关闭数据库连接时出错:', closeError);
+  }
+}
+
+/**
  * 主函数 - 程序入口点
  */
 async function main() {
   try {
     await testAllServers();
-    await closeDatabaseConnection();
+    await safeCloseDatabaseConnection();
     // 程序正常完成，显式退出
     process.exit(0);
   } catch (err) {
     logError('程序执行出错:', err);
     // 确保在出错时也关闭数据库连接
-    try {
-      await closeDatabaseConnection();
-    } catch (closeError) {
-      logError('关闭数据库连接时出错:', closeError);
-    }
+    await safeCloseDatabaseConnection();
     process.exit(1);
   }
 }

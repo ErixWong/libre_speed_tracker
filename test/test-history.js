@@ -1,14 +1,12 @@
 const config = require('../config.js');
-const { initDatabase, getHistoryResults, getServerStats, closeConnection } = require('../utils/database-native');
+const { setupTestDatabase, teardownTestDatabase, runTestWithDatabase } = require('./test-utils');
+const { getHistoryResults, getServerStats } = require('../utils/database-native');
 const { logInfo, logError } = require('../utils/logger');
 
 async function testHistoryFunction() {
   logInfo('测试历史记录功能...');
   
-  try {
-    // 初始化数据库连接
-    await initDatabase(config.database);
-    
+  return await runTestWithDatabase(async () => {
     // 测试1: 获取所有历史记录
     console.log('\n测试1: 获取所有历史记录');
     const allResults = await getHistoryResults(10);
@@ -19,7 +17,7 @@ async function testHistoryFunction() {
     if (config.servers.length > 0) {
       const serverName = config.servers[0].name;
       const serverResults = await getHistoryResults(10, serverName);
-    logInfo(`✅ 成功获取服务器 "${serverName}" 的 ${serverResults.length} 条历史记录`);
+      logInfo(`✅ 成功获取服务器 "${serverName}" 的 ${serverResults.length} 条历史记录`);
       
       // 显示最新的一条记录
       if (serverResults.length > 0) {
@@ -64,15 +62,9 @@ async function testHistoryFunction() {
     const limitedResults = await getHistoryResults(3);
     logInfo(`✅ 成功获取 ${limitedResults.length} 条记录（限制3条）`);
     
-    // 关闭数据库连接
-    await closeConnection();
-    
     console.log('\n✅ 历史记录功能测试完成');
     return true;
-  } catch (error) {
-    logError('测试历史记录功能时发生错误:', error);
-    return false;
-  }
+  });
 }
 
 // 如果直接运行此文件，则执行测试

@@ -3,6 +3,20 @@ const { logInfo, logError, logWarn } = require('./logger');
 let pool = null;
 
 /**
+ * 统一的数据库操作日志处理
+ * @param {string} operation 操作名称
+ * @param {string} status 状态（success/error）
+ * @param {Error|string} error 错误对象或消息（可选）
+ */
+function logDatabaseOperation(operation, status, error = null) {
+  if (status === 'success') {
+    logInfo(`${operation}成功`);
+  } else if (status === 'error') {
+    logError(`${operation}失败:`, error);
+  }
+}
+
+/**
  * 初始化数据库连接池
  * @param {Object} dbConfig 数据库配置
  */
@@ -23,14 +37,14 @@ async function initDatabase(dbConfig) {
     
     // 测试连接
     const [rows] = await pool.execute('SELECT 1');
-    logInfo('数据库连接成功');
+    logDatabaseOperation('数据库连接', 'success');
     
     // 初始化表结构
     await initTables();
     
-    logInfo('数据库初始化完成');
+    logDatabaseOperation('数据库初始化', 'success');
   } catch (err) {
-    logError('数据库初始化失败:', err);
+    logDatabaseOperation('数据库初始化', 'error', err);
     throw err;
   }
 }
@@ -72,12 +86,12 @@ async function initTables() {
       }
     }
     
-    logInfo('数据库表和索引初始化完成');
+    logDatabaseOperation('数据库表和索引初始化', 'success');
     
     // 检查并修改现有表结构，确保允许字段为null
     await modifyTableStructure();
   } catch (err) {
-    logError('初始化表结构失败:', err);
+    logDatabaseOperation('初始化表结构', 'error', err);
     throw err;
   }
 }
@@ -107,9 +121,9 @@ async function modifyTableStructure() {
       }
     }
     
-    logInfo('表结构修改完成');
+    logDatabaseOperation('表结构修改', 'success');
   } catch (err) {
-    logError('修改表结构失败:', err);
+    logDatabaseOperation('修改表结构', 'error', err);
     throw err;
   }
 }
@@ -207,7 +221,7 @@ async function saveResult(result) {
     logInfo('测试结果已保存到数据库，ID:', resultData.insertId);
     return { id: resultData.insertId };
   } catch (err) {
-    logError('保存测试结果失败:', err);
+    logDatabaseOperation('保存测试结果', 'error', err);
     throw err;
   }
 }
@@ -254,7 +268,7 @@ async function getHistoryResults(limit = 10, serverName = null) {
       return row;
     });
   } catch (err) {
-    logError('获取历史结果失败:', err);
+    logDatabaseOperation('获取历史结果', 'error', err);
     throw err;
   }
 }
@@ -284,7 +298,7 @@ async function getServerStats(serverUrl) {
     const [rows] = await pool.execute(sql, [serverUrl]);
     return rows[0] || {};
   } catch (err) {
-    logError('获取服务器统计信息失败:', err);
+    logDatabaseOperation('获取服务器统计信息', 'error', err);
     throw err;
   }
 }
@@ -296,7 +310,7 @@ async function closeConnection() {
   if (pool) {
     await pool.end();
     pool = null;
-    logInfo('数据库连接已关闭');
+    logDatabaseOperation('数据库连接关闭', 'success');
   }
 }
 
