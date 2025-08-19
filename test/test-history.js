@@ -1,9 +1,9 @@
 const config = require('../config.js');
 const { initDatabase, getHistoryResults, getServerStats, closeConnection } = require('../utils/database-native');
-const { log, error } = require('../utils/logger');
+const { logInfo, logError } = require('../utils/logger');
 
 async function testHistoryFunction() {
-  log('测试历史记录功能...');
+  logInfo('测试历史记录功能...');
   
   try {
     // 初始化数据库连接
@@ -12,19 +12,19 @@ async function testHistoryFunction() {
     // 测试1: 获取所有历史记录
     console.log('\n测试1: 获取所有历史记录');
     const allResults = await getHistoryResults(10);
-    log(`✅ 成功获取 ${allResults.length} 条历史记录`);
+    logInfo(`✅ 成功获取 ${allResults.length} 条历史记录`);
     
     // 测试2: 获取特定服务器的历史记录
     console.log('\n测试2: 获取特定服务器的历史记录');
     if (config.servers.length > 0) {
       const serverName = config.servers[0].name;
       const serverResults = await getHistoryResults(10, serverName);
-    log(`✅ 成功获取服务器 "${serverName}" 的 ${serverResults.length} 条历史记录`);
+    logInfo(`✅ 成功获取服务器 "${serverName}" 的 ${serverResults.length} 条历史记录`);
       
       // 显示最新的一条记录
       if (serverResults.length > 0) {
         const latest = serverResults[0];
-        log(`最新记录: 下载 ${latest.download_speed} Mbps, 上传 ${latest.upload_speed} Mbps, 延迟 ${latest.ping} ms`);
+        logInfo(`最新记录: 下载 ${latest.download_speed} Mbps, 上传 ${latest.upload_speed} Mbps, 延迟 ${latest.ping} ms`);
       }
     }
     
@@ -40,7 +40,7 @@ async function testHistoryFunction() {
         console.log(`  平均抖动: ${parseFloat(stats.avg_jitter || 0).toFixed(2)} ms`);
         console.log(`  测试次数: ${stats.test_count || 0}`);
       } catch (error) {
-        error(`获取服务器 "${server.name || server.url}" 统计信息失败:`, error.message);
+        logError(`获取服务器 "${server.name || server.url}" 统计信息失败:`, error.message);
       }
     }
     
@@ -51,18 +51,18 @@ async function testHistoryFunction() {
       const first = new Date(sortedResults[0].test_timestamp);
       const second = new Date(sortedResults[1].test_timestamp);
       if (first > second) {
-        log('✅ 历史记录按时间降序排列正确');
+        logInfo('✅ 历史记录按时间降序排列正确');
       } else {
-        log('❌ 历史记录排序不正确');
+        logInfo('❌ 历史记录排序不正确');
       }
     } else {
-      log('ℹ️ 历史记录不足，无法测试排序功能');
+      logInfo('ℹ️ 历史记录不足，无法测试排序功能');
     }
     
     // 测试5: 测试限制返回记录数
     console.log('\n测试5: 测试限制返回记录数');
     const limitedResults = await getHistoryResults(3);
-    log(`✅ 成功获取 ${limitedResults.length} 条记录（限制3条）`);
+    logInfo(`✅ 成功获取 ${limitedResults.length} 条记录（限制3条）`);
     
     // 关闭数据库连接
     await closeConnection();
@@ -70,7 +70,7 @@ async function testHistoryFunction() {
     console.log('\n✅ 历史记录功能测试完成');
     return true;
   } catch (error) {
-    error('测试历史记录功能时发生错误:', error);
+    logError('测试历史记录功能时发生错误:', error);
     return false;
   }
 }
@@ -87,7 +87,7 @@ if (require.main === module) {
       process.exit(success ? 0 : 1);
     })
     .catch(error => {
-      error('测试过程中发生错误:', error);
+      logError('测试过程中发生错误:', error);
       process.exit(1);
     });
 }

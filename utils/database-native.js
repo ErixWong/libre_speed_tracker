@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const { log, error, warn } = require('./logger');
+const { logInfo, logError, logWarn } = require('./logger');
 let pool = null;
 
 /**
@@ -23,14 +23,14 @@ async function initDatabase(dbConfig) {
     
     // 测试连接
     const [rows] = await pool.execute('SELECT 1');
-    log('数据库连接成功');
+    logInfo('数据库连接成功');
     
     // 初始化表结构
     await initTables();
     
-    log('数据库初始化完成');
+    logInfo('数据库初始化完成');
   } catch (err) {
-    error('数据库初始化失败:', err);
+    logError('数据库初始化失败:', err);
     throw err;
   }
 }
@@ -68,13 +68,48 @@ async function initTables() {
       try {
         await pool.execute(indexSql);
       } catch (err) {
-        warn('创建索引时出现警告（可能已存在）:', err.message);
+        logWarn('创建索引时出现警告（可能已存在）:', err.message);
       }
     }
     
-    log('数据库表和索引初始化完成');
+    logInfo('数据库表和索引初始化完成');
+    
+    // 检查并修改现有表结构，确保允许字段为null
+    await modifyTableStructure();
   } catch (err) {
-    error('初始化表结构失败:', err);
+    logError('初始化表结构失败:', err);
+    throw err;
+  }
+}
+
+/**
+ * 修改表结构，确保允许字段为null
+ */
+async function modifyTableStructure() {
+  try {
+    // 检查表是否存在
+    const [tables] = await pool.execute('SHOW TABLES LIKE "speedtest_results"');
+    if (tables.length === 0) {
+      return; // 表不存在，无需修改
+    }
+    
+    // 获取表结构
+    const [columns] = await pool.execute('SHOW COLUMNS FROM speedtest_results');
+    
+    // 检查并修改需要允许为null的字段
+    const nullableColumns = ['download_speed', 'upload_speed', 'ping', 'jitter'];
+    
+    for (const column of nullableColumns) {
+      const columnInfo = columns.find(col => col.Field === column);
+      if (columnInfo && columnInfo.Null === 'NO') {
+        logInfo(`修改表结构：允许 ${column} 字段为null`);
+        await pool.execute(`ALTER TABLE speedtest_results MODIFY COLUMN ${column} FLOAT`);
+      }
+    }
+    
+    logInfo('表结构修改完成');
+  } catch (err) {
+    logError('修改表结构失败:', err);
     throw err;
   }
 }
@@ -145,7 +180,7 @@ async function saveResult(result) {
   const validation = validateResult(result);
   if (!validation.isValid) {
     const errorMsg = `数据验证失败: ${validation.errors.join(', ')}`;
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -169,10 +204,10 @@ async function saveResult(result) {
       serverInfoJson
     ]);
     
-    log('测试结果已保存到数据库，ID:', resultData.insertId);
+    logInfo('测试结果已保存到数据库，ID:', resultData.insertId);
     return { id: resultData.insertId };
   } catch (err) {
-    error('保存测试结果失败:', err);
+    logError('保存测试结果失败:', err);
     throw err;
   }
 }
@@ -212,14 +247,14 @@ async function getHistoryResults(limit = 10, serverName = null) {
         try {
           row.server_info = JSON.parse(row.server_info);
         } catch (e) {
-          warn('解析server_info JSON失败:', e.message);
+          logWarn('解析server_info JSON失败:', e.message);
           row.server_info = {};
         }
       }
       return row;
     });
   } catch (err) {
-    error('获取历史结果失败:', err);
+    logError('获取历史结果失败:', err);
     throw err;
   }
 }
@@ -249,7 +284,7 @@ async function getServerStats(serverUrl) {
     const [rows] = await pool.execute(sql, [serverUrl]);
     return rows[0] || {};
   } catch (err) {
-    error('获取服务器统计信息失败:', err);
+    logError('获取服务器统计信息失败:', err);
     throw err;
   }
 }
@@ -261,7 +296,7 @@ async function closeConnection() {
   if (pool) {
     await pool.end();
     pool = null;
-    log('数据库连接已关闭');
+    logInfo('数据库连接已关闭');
   }
 }
 

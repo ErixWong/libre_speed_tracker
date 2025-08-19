@@ -1,9 +1,9 @@
 const config = require('../config.js');
 const axios = require('axios');
-const { log, error } = require('../utils/logger');
+const { logInfo, logError } = require('../utils/logger');
 
 async function testServerConnection() {
-  log('正在测试LibreSpeed服务器连接...');
+  logInfo('正在测试LibreSpeed服务器连接...');
   
   for (const server of config.servers) {
     console.log(`\n测试服务器: ${server.name || server.url}`);
@@ -29,10 +29,10 @@ async function testServerConnection() {
       const client = axios.create(requestConfig);
 
       // 测试基本连接
-      log('测试基本连接...');
+      logInfo('测试基本连接...');
       const response = await client.get('/backend/getIP.php');
-      log('✅ 服务器连接成功');
-      log('服务器响应:', JSON.stringify(response.data, null, 2));
+      logInfo('✅ 服务器连接成功');
+      logInfo('服务器响应:', JSON.stringify(response.data, null, 2));
       
       // 测试下载端点
       console.log('\n测试下载端点...');
@@ -41,9 +41,9 @@ async function testServerConnection() {
           params: { ckSize: 1 }, // 1MB测试数据
           timeout: 5000
         });
-        log('✅ 下载端点测试成功');
+        logInfo('✅ 下载端点测试成功');
       } catch (downloadError) {
-        error('❌ 下载端点测试失败:', downloadError.message);
+        logError('❌ 下载端点测试失败:', downloadError.message);
       }
       
       // 测试上传端点
@@ -56,22 +56,22 @@ async function testServerConnection() {
           },
           timeout: 5000
         });
-        log('✅ 上传端点测试成功');
+        logInfo('✅ 上传端点测试成功');
       } catch (uploadError) {
-        error('❌ 上传端点测试失败:', uploadError.message);
+        logError('❌ 上传端点测试失败:', uploadError.message);
       }
       
     } catch (error) {
-      error('❌ 服务器连接失败:', error.message);
+      logError('❌ 服务器连接失败:', error.message);
       if (error.response) {
-        error('HTTP状态码:', error.response.status);
-        error('响应数据:', error.response.data);
+        logError('HTTP状态码:', error.response.status);
+        logError('响应数据:', error.response.data);
       } else if (error.code === 'ECONNREFUSED') {
-        error('连接被拒绝，请检查服务器是否运行');
+        logError('连接被拒绝，请检查服务器是否运行');
       } else if (error.code === 'ENOTFOUND') {
-        error('无法解析主机名，请检查URL是否正确');
+        logError('无法解析主机名，请检查URL是否正确');
       } else if (error.code === 'ETIMEDOUT') {
-        error('连接超时，请检查网络或服务器状态');
+        logError('连接超时，请检查网络或服务器状态');
       }
     }
   }
@@ -85,7 +85,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch(error => {
-      error('测试过程中发生错误:', error);
+      logError('测试过程中发生错误:', error);
       process.exit(1);
     });
 }

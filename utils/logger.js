@@ -22,7 +22,7 @@ function getTimestamp() {
  * 输出带时间戳的信息日志
  * @param {...any} args 要输出的内容
  */
-function log(...args) {
+function logInfo(...args) {
   const timestamp = getTimestamp();
   console.log(`[${timestamp}]`, ...args);
 }
@@ -31,7 +31,7 @@ function log(...args) {
  * 输出带时间戳的错误日志
  * @param {...any} args 要输出的内容
  */
-function error(...args) {
+function logError(...args) {
   const timestamp = getTimestamp();
   console.error(`[${timestamp}]`, ...args);
 }
@@ -40,13 +40,13 @@ function error(...args) {
  * 输出带时间戳的警告日志
  * @param {...any} args 要输出的内容
  */
-function warn(...args) {
+function logWarn(...args) {
   const timestamp = getTimestamp();
   console.warn(`[${timestamp}]`, ...args);
 }
 
 module.exports = {
-  log,
-  error,
-  warn
+  logInfo,
+  logError,
+  logWarn
 };
