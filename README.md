@@ -130,7 +130,7 @@ The script provides the following methods:
 - `saveResult(result)`: Save test results to the database
 - `initDatabase()`: Initialize database connection and table structure
 - `getHistoryResults(limit)`: Get recent test results
-- `closeConnection()`: Close the database connection
+- `closeDatabaseConnection()`: Close the database connection
 
 ## Usage Examples
 
@@ -152,7 +152,7 @@ testAllServers()
 ### Custom Usage
 
 ```javascript
-const { testServer, saveResult, initDatabase, getHistoryResults } = require('./index.js');
+const { testServer, saveResult, initDatabase, getHistoryResults, closeDatabaseConnection } = require('./index.js');
 
 // Initialize database
 await initDatabase();
@@ -171,6 +171,9 @@ await saveResult(result);
 // Get historical results
 const history = await getHistoryResults(10);
 console.log('Recent test results:', history);
+
+// Close database connection when done
+await closeDatabaseConnection();
 ```
 
 ## Qinglong Panel Integration
@@ -199,6 +202,50 @@ console.log('Recent test results:', history);
 ## License
 
 MIT
+
+## Testing
+
+The project includes a comprehensive test suite to ensure functionality and reliability:
+
+### Running Tests
+
+To run all tests, execute the following commands:
+
+```bash
+# Install dependencies (if not already installed)
+npm install
+
+# Run database connection tests
+node test/test-db-connection.js
+
+# Run server connection tests
+node test/test-server-connection.js
+
+# Run logger tests
+node test/test-logger.js
+
+# Run history function tests
+node test/test-history.js
+
+# Run result verification tests
+node test/verify-results.js
+```
+
+### Test Files Overview
+
+- **test/test-db-connection.js**: Tests database connection, verifies database creation, and checks table structure.
+- **test/test-server-connection.js**: Tests connections to LibreSpeed servers, verifies API endpoints, and checks basic authentication.
+- **test/test-logger.js**: Tests the logging functionality, including info, error, and warning messages.
+- **test/test-history.js**: Tests the history retrieval functionality, including filtering and sorting of results.
+- **test/test-utils.js**: Provides utility functions for database testing, including setup and teardown.
+- **test/verify-results.js**: Verifies the accuracy and completeness of test results.
+
+### Test Prerequisites
+
+Before running tests, ensure:
+1. MySQL server is running and accessible
+2. Database credentials are correctly configured in `config.example.js` (copied to `config.js`)
+3. All dependencies are installed (`npm install`)
 
 ## Contributing
 
@@ -341,7 +388,7 @@ CREATE TABLE IF NOT EXISTS speedtest_results (
 - `saveResult(result)`: 将测试结果保存到数据库
 - `initDatabase()`: 初始化数据库连接和表结构
 - `getHistoryResults(limit)`: 获取最近的测试结果
-- `closeConnection()`: 关闭数据库连接
+- `closeDatabaseConnection()`: 关闭数据库连接
 
 ## 使用示例
 
@@ -363,7 +410,7 @@ testAllServers()
 ### 自定义用法
 
 ```javascript
-const { testServer, saveResult, initDatabase, getHistoryResults } = require('./index.js');
+const { testServer, saveResult, initDatabase, getHistoryResults, closeDatabaseConnection } = require('./index.js');
 
 // 初始化数据库
 await initDatabase();
@@ -382,6 +429,9 @@ await saveResult(result);
 // 获取历史结果
 const history = await getHistoryResults(10);
 console.log('最近的测试结果:', history);
+
+// 完成后关闭数据库连接
+await closeDatabaseConnection();
 ```
 
 ## 青龙面板集成
@@ -410,6 +460,50 @@ console.log('最近的测试结果:', history);
 ## 许可证
 
 MIT
+
+## 测试
+
+项目包含全面的测试套件，以确保功能的可靠性和稳定性：
+
+### 运行测试
+
+要运行所有测试，请执行以下命令：
+
+```bash
+# 安装依赖（如果尚未安装）
+npm install
+
+# 运行数据库连接测试
+node test/test-db-connection.js
+
+# 运行服务器连接测试
+node test/test-server-connection.js
+
+# 运行日志功能测试
+node test/test-logger.js
+
+# 运行历史记录功能测试
+node test/test-history.js
+
+# 运行结果验证测试
+node test/verify-results.js
+```
+
+### 测试文件概述
+
+- **test/test-db-connection.js**: 测试数据库连接，验证数据库创建和检查表结构。
+- **test/test-server-connection.js**: 测试与LibreSpeed服务器的连接，验证API端点和基本认证。
+- **test/test-logger.js**: 测试日志记录功能，包括信息、错误和警告消息。
+- **test/test-history.js**: 测试历史记录检索功能，包括结果的筛选和排序。
+- **test/test-utils.js**: 提供数据库测试的实用工具函数，包括设置和清理。
+- **test/verify-results.js**: 验证测试结果的准确性和完整性。
+
+### 测试前提条件
+
+运行测试前，请确保：
+1. MySQL服务器正在运行且可访问
+2. 数据库凭据在 `config.example.js`（复制为 `config.js`）中正确配置
+3. 所有依赖已安装（`npm install`）
 
 ## 贡献
 
