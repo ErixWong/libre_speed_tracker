@@ -1,5 +1,5 @@
 const { testServers } = require('./utils/speedtest');
-const { saveResult, initDatabase, closeConnection, getHistoryResults } = require('./utils/database');
+const { saveResult, initDatabase, closeConnection, getHistoryResults } = require('./utils/database-native');
 const { log, error } = require('./utils/logger');
 const config = require('./config.js');
 
@@ -24,9 +24,9 @@ async function testServer(serverConfig) {
     const result = await testServers(serverConfig);
     log(`测试完成: ${serverConfig.name || serverConfig.url} - 下载: ${result.download_speed} Mbps, 上传: ${result.upload_speed} Mbps, 延迟: ${result.ping} ms`);
     return result;
-  } catch (error) {
-    error(`测试失败: ${serverConfig.name || serverConfig.url}`, error.message);
-    throw error;
+  } catch (err) {
+    error(`测试失败: ${serverConfig.name || serverConfig.url}`, err.message);
+    throw err;
   }
 }
 
@@ -40,9 +40,9 @@ async function saveTestResult(result) {
     const record = await saveResult(result);
     log('测试结果已保存到数据库，ID:', record.id);
     return record;
-  } catch (error) {
-    error('保存测试结果失败:', error);
-    throw error;
+  } catch (err) {
+    error('保存测试结果失败:', err);
+    throw err;
   }
 }
 
@@ -56,9 +56,9 @@ async function getTestHistoryResults(limit = 10) {
     const results = await getHistoryResults(limit);
     log(`获取到 ${results.length} 条历史测试结果`);
     return results;
-  } catch (error) {
-    error('获取历史测试结果失败:', error);
-    throw error;
+  } catch (err) {
+    error('获取历史测试结果失败:', err);
+    throw err;
   }
 }
 
@@ -81,17 +81,17 @@ async function testAllServers() {
         const result = await testServer(server);
         await saveTestResult(result);
         results.push(result);
-      } catch (error) {
-        error(`测试失败: ${server.name || server.url}`, error.message);
+      } catch (err) {
+        error(`测试失败: ${server.name || server.url}`, err.message);
         // 继续测试其他服务器，而不是终止整个测试过程
       }
     }
     
     log('所有测试完成');
     return results;
-  } catch (error) {
-    error('程序执行出错:', error);
-    throw error;
+  } catch (err) {
+    error('程序执行出错:', err);
+    throw err;
   }
 }
 
@@ -114,8 +114,8 @@ async function main() {
     await closeDatabaseConnection();
     // 程序正常完成，显式退出
     process.exit(0);
-  } catch (error) {
-    error('程序执行出错:', error);
+  } catch (err) {
+    error('程序执行出错:', err);
     // 确保在出错时也关闭数据库连接
     try {
       await closeDatabaseConnection();

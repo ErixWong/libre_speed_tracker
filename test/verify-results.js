@@ -1,5 +1,5 @@
 const config = require('../config.js');
-const { initDatabase, getHistoryResults, closeConnection } = require('../utils/database');
+const { initDatabase, getHistoryResults, closeConnection } = require('../utils/database-native');
 const { log, error } = require('../utils/logger');
 
 async function verifyResults() {

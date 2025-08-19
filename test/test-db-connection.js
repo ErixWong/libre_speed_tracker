@@ -1,5 +1,5 @@
 const config = require('../config.js');
-const { initDatabase, closeConnection } = require('../utils/database');
+const { initDatabase, closeConnection } = require('../utils/database-native');
 const { log, error } = require('../utils/logger');
 const mysql = require('mysql2/promise');
 
